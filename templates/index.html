@@ -1,0 +1,334 @@
+<!-- <!DOCTYPE html>
+<html>
+  <head>
+    <title>Video Processing</title>
+    <style>
+      .container {
+        
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+      .button-container {
+        display: flex;
+        gap: 10px;
+      }
+      .video-container {
+        display: flex;
+        justify-content: space-between;
+        border: 1px solid black;
+        padding: 10px;
+        width: 80%;
+      }
+      video,
+      img {
+        max-width: 49%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Violence Detection</h2>
+      <form action="/uploader" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" />
+        <input type="submit" value="Upload" />
+      </form>
+      <div class="button-container">
+        <button id="preview-button" disabled>Preview</button>
+        <button id="submit-button" disabled>Submit</button>
+        <button id="camera-button">Open Camera</button>
+      </div>
+      <div class="video-container">
+        <video id="preview-video" width="320" height="240" controls>
+        </video>
+        <img id="processed-video" src="" />
+      </div>
+    </div>
+    <script>
+      var filename;
+
+      document
+        .querySelector("form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          var formData = new FormData(event.target);
+          fetch("/uploader", {
+            method: "POST",
+            body: formData,
+          })
+            .then(function (response) {
+              return response.text();
+            })
+            .then(function (responseFilename) {
+              filename = responseFilename;
+              document.getElementById("preview-button").disabled = false;
+              document.getElementById("submit-button").disabled = false;
+            });
+        });
+
+      document
+        .getElementById("preview-button")
+        .addEventListener("click", function () {
+          document.getElementById("preview-video").src =
+            "/static/uploads/" + filename;
+        });
+
+      document
+        .getElementById("submit-button")
+        .addEventListener("click", function () {
+          fetch("/start_processing", {
+            method: "POST",
+            body: JSON.stringify({ filename: filename }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }).then(function () {
+            document.getElementById("processed-video").src =
+              "/processed_video_feed/" + filename;
+          });
+        });
+      document
+        .getElementById("camera-button")
+        .addEventListener("click", function () {
+          fetch("/start_processing", {
+            method: "POST",
+            body: JSON.stringify({ filename: "camera" }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }).then(function () {
+            document.getElementById("processed-video").src = "/camera_feed";
+          });
+        });
+    </script>
+  </body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violence Detection</title>
+  <style>
+    /* General body styling */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)), url('/static/crime.jpg');
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+    }
+
+    /* Main container */
+    .container {
+      max-width: 800px;
+      margin: 5% auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      color: #e63946;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    input[type="file"],
+    input[type="submit"] {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+
+    input[type="file"] {
+      background-color: #6c757d;
+      color: #fff;
+    }
+
+    input[type="submit"] {
+      background-color: #e63946;
+      color: #fff;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #b32d34;
+    }
+
+    .button-container {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #1f7a8c;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #155d6a;
+    }
+
+    button:disabled {
+      background-color: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .video-container {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    video,
+    img {
+      max-width: 100%;
+      border: 1px solid #6c757d;
+      border-radius: 8px;
+    }
+
+    video {
+      max-height: 240px;
+    }
+
+    img {
+      max-height: 240px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 600px) {
+      .container {
+        width: 90%;
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      button {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Violence Detection</h1>
+    <form id="upload-form" action="/uploader" method="POST" enctype="multipart/form-data">
+      <input type="file" name="file" aria-label="Choose file to upload" required />
+      <input type="submit" value="Upload" />
+    </form>
+    <div class="button-container">
+      <button id="preview-button" disabled>Preview</button>
+      <button id="submit-button" disabled>Submit</button>
+      <button id="camera-button">Open Camera</button>
+    </div>
+    <div class="video-container">
+      <video id="preview-video" controls></video>
+      <img id="processed-video" src="" alt="" />
+    </div>
+  </div>
+
+  <script>
+    let filename;
+
+    document.querySelector("#upload-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      // Add visual feedback
+      const submitButton = event.target.querySelector('input[type="submit"]');
+      submitButton.value = "Uploading...";
+      submitButton.disabled = true;
+
+      const formData = new FormData(event.target);
+      fetch("/uploader", {
+        method: "POST",
+        body: formData,
+      })
+        .then(response => response.text())
+        .then(responseFilename => {
+          filename = responseFilename;
+          document.getElementById("preview-button").disabled = false;
+          document.getElementById("submit-button").disabled = false;
+          alert("File uploaded successfully!");
+        })
+        .catch(error => {
+          console.error("Error uploading file:", error);
+          alert("Failed to upload file. Please try again.");
+        })
+        .finally(() => {
+          submitButton.value = "Upload";
+          submitButton.disabled = false;
+        });
+    });
+
+    document.getElementById("preview-button").addEventListener("click", function () {
+      if (filename) {
+        document.getElementById("preview-video").src = "/static/" + filename;
+      } else {
+        alert("No file uploaded to preview.");
+      }
+    });
+
+    document.getElementById("submit-button").addEventListener("click", function () {
+      fetch("/start_processing", {
+        method: "POST",
+        body: JSON.stringify({ filename: filename }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then(() => {
+          document.getElementById("processed-video").src = "/processed_video_feed/" + filename;
+        })
+        .catch(error => {
+          console.error("Error processing video:", error);
+          alert("Failed to process video. Please try again.");
+        });
+    });
+
+    document.getElementById("camera-button").addEventListener("click", function () {
+      fetch("/start_processing", {
+        method: "POST",
+        body: JSON.stringify({ filename: "camera" }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then(() => {
+          document.getElementById("processed-video").src = "/camera_feed";
+        })
+        .catch(error => {
+          console.error("Error starting camera feed:", error);
+          alert("Failed to start camera feed. Please try again.");
+        });
+    });
+  </script>
+</body>
+
+</html>
